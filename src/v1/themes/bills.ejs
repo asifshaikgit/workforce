@@ -1,0 +1,199 @@
+<html>
+
+<head>
+    <style>
+        body {
+            font-size: 10pt;
+            padding: 10px
+        }
+
+        p {
+            margin: 0pt;
+        }
+
+        table.items {
+            border: 0.1mm solid #e7e7e7;
+        }
+
+        td {
+            vertical-align: top;
+        }
+
+        thead {
+            text-align: center;
+            padding: 6px 2px;
+            color: #F7F7FA;
+            background-color: #2A3042;
+        }
+
+
+        .items td {
+            border-left: 0.1mm solid #e7e7e7;
+            border-right: 0.1mm solid #e7e7e7;
+        }
+
+        table thead td {
+            text-align: center;
+            border: 0.1mm solid #e7e7e7;
+        }
+
+        .items td.blanktotal {
+            background-color: #EEEEEE;
+            border: 0.1mm solid #e7e7e7;
+            background-color: #FFFFFF;
+            border: 0mm none #e7e7e7;
+            border-top: 0.1mm solid #e7e7e7;
+            border-right: 0.1mm solid #e7e7e7;
+        }
+
+        .items td.totals {
+            text-align: right;
+            border: 0.1mm solid #e7e7e7;
+        }
+
+        .items td.cost {
+            text-align: "." center;
+        }
+    </style>
+</head>
+
+<body>
+    <table width="100%" cellpadding="10">
+        <tr>
+            <td> <img src="<%=bill_data.logo%>" alt="watermark" style="width: 75px;"></td>
+
+            <td width="100%" style="text-align: right; padding: 10px;">
+                <div> <strong style="text-align: right; font-size: 20px; font-weight: bold">Bill</strong>
+                    <p>
+                        <%=bill_data.bill_no%>
+                    </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div>
+                    <strong>
+                        <%=bill_data.organization_name%>
+                    </strong>
+                    <p style="padding-top: 10px">
+                        <%=bill_data.office_address%>
+                    </p>
+                    <p>
+                        <%=bill_data.office_address_cities%>
+                    </p>
+                </div>
+            </td>
+            <td width="100%" style="text-align: right; padding: 10px;">
+                <div> <strong style="text-align: right; font-size: 20px; font-weight: bold">
+                        <div>
+                            <p>Balance Due
+                            <p>
+                            <p>$ <%=bill_data.balance_due%>
+                            </p>
+                        </div>
+            </td>
+        </tr>
+    </table>
+    <table width="100%" cellpadding="10">
+        <tr>
+            <td><strong>Bill To</strong></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>
+                <p style="color: blue"><strong>
+                        <%=bill_data.name%>
+                    </strong></p>
+                <p style="padding-top: 5px">
+                    <%=bill_data.bill_to%>
+                </P>
+                <p style="padding-bottom: 5px;">
+                    <%=bill_data.bill_to_cities%>
+                </p>
+            </td>
+            <td style="text-align: right; padding: 10px;">
+                <div>
+                    <p style="padding: 5px;">Bill Date : <%=bill_data.bill_date%>
+                    </p>
+                    <p style="padding: 5px;">Due Date : <%=bill_data.due_date%>
+                    </p>
+                    <p style="padding: 5px;">Terms : <%=bill_data.terms%>
+                    </p>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <table class="items" width="100%" style="font-size: 14px; border-collapse: collapse;" cellpadding="8">
+        <thead>
+            <tr>
+                <td width="15%" style="text-align: left;"><strong>S.NO</strong></td>
+                <td width="45%" style="text-align: left;"><strong>Item & Describe</strong></td>
+                <td width="20%" style="text-align: left;"><strong>Qty</strong></td>
+                <td width="20%" style="text-align: left;"><strong>Rate</strong></td>
+                <td width="20%" style="text-align: left;"><strong>Amount</strong></td>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- ITEMS HERE -->
+            <% if (bill_data.body_data.length> 0) { %>
+                <% bill_data.body_data.forEach(data=> {%>
+                    <tr>
+                        <td style="padding:  7px; line-height: 20px;">
+                            <%= data.s_no %>
+                        </td>
+                        <td style="padding:  7px; line-height: 20px;">
+                            <%= data.service_name %>
+                        </td>
+                        <td style="padding:  7px; line-height: 20px;">
+                            <%= data.hours %>
+                        </td>
+                        <td style="padding:  7px; line-height: 20px;">
+                            <%= data.rate %>
+                        </td>
+                        <td style="padding: 7px; line-height: 20px;">
+                            <%= data.amount %>
+                        </td>
+                    </tr>
+                    <% });%>
+                        <% }%>
+                            <style>
+                                .items tbody tr:not(:last-child) {
+                                    border-bottom: 1px solid #000;
+                                    /* You can adjust the color and style of the line as needed */
+                                }
+                            </style>
+        </tbody>
+
+    </table>
+    <br>
+    <table width="100%" style="font-size: 14px;">
+        <tr>
+            <td></td>
+            <td style=" text-align: right; line-height: 20px;">Sub Amount : $ <%=bill_data.sub_total%>
+            </td>
+
+        </tr>
+        <tr>
+            <td></td>
+            <td style="text-align: right; line-height: 20px;">Total Amount : $ <%=bill_data.total%>
+            </td>
+
+        </tr>
+    </table>
+    <br>
+    <table width="100%" style="font-family: sans-serif; font-size: 14px;">
+        <br>
+        <tr>
+            <td>
+                <P><strong>Notes</strong></p>
+                <p>
+                    <%=bill_data.notes%>
+                </p>
+            </td>
+        </tr>
+        <br>
+    </table>
+</body>
+
+</html>

@@ -1,0 +1,223 @@
+const { domainName } = require('../../config/app');
+// Default Mail templates
+const mailTemplateData = [
+  {
+    slug: 'expenses',
+    name: 'New Expenses',
+    subject: 'New Expense Submitted - Action Required',
+    template: '<html> <head> </head> <body> <div style="font-family: Arial, sans-serif; font-size: 16px;"> <p>Dear {{first_name}},</p> <p>This email is to inform you that a new expense has been submitted for your review and approval. Please find the details below: </p><p>Expense Details: :</p> <div style="background-color: #f2f2f2; padding: 10px; margin: 10px 0;"> <p><b>Employee Name: </b> {{display_name}} </p> <p><b>Email ID: </b>{{email_id}} </p> <p><b>Amount: </b>{{currency}} {{amount}}</p> <p><b>Expense Type: </b> {{expense_type}} </p> <p><b> Expense Date: </b> {{date}}</p></div> <p>To review and approve the expense, please click on the following link:</p> <a href="{{approveLink}}" style="display: inline-block; background-color: #007bff; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">Approve Expenses</a><p>If you have any questions or need further information, please contact the employee directly. </p> <p>Thank you for your attention to this matter. Your prompt action is appreciated. </p> <p>Best regards,</p> <p>{{organization_signature}}</p> </div> </body> </html>',
+    created_at: new Date(),
+  },
+  {
+    slug: 'expense-approved',
+    name: 'Expense Approved',
+    subject: 'Expense Approved',
+    template: '<html><head><style>body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; }</style></head><body><div class="container"><h1 class="header">Expense Approved</h1><div class="message"><p>Dear {{first_name}},</p><p>I hope this email finds you well.</p><p>I am pleased to inform you that the expense for {{expense_type}} has been approved. The details of the approved expense are as follows:</p><ul><li><b>Date of Expense:</b> {{date}}</li><li><b>Description:</b> {{expense_description}}</li><li><b>Amount:</b> {{currency}} {{amount}}</li><li><b>Category:</b> {{expense_type}}</li></ul><p>We will be processing the necessary payments or reimbursements as per the approved expense.</p><p>Thank you for your attention to this matter.</p><p>Best regards,</p><p>{{organization_signature}}</p></div></div></body></html>',
+    created_at: new Date(),
+  },
+  {
+    slug: 'expense-rejected',
+    name: 'Expense Rejected',
+    subject: 'Expense Rejected',
+    template: '<html><head><style>body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; }</style></head><body><div class="container"><h1 class="header">Expense Rejected</h1><div class="message"><p>Dear {{first_name}},</p><p>I hope this email finds you well.</p><p>I regret to inform you that the expense for [Expense category] has been rejected. After careful review, it has been determined that the expense does not meet our company\'s guidelines or policies.</p><p>The details of the rejected expense are as follows:</p><ul><li><b>Date of Expense:</b> {{date}}</li><li><b>Description:</b> {{expense_description}}</li><li><b>Amount:</b> {{currency}} {{amount}}</li><li><b>Category:</b> {{expense_type}}</li></ul><p>If you have any questions or need further clarification regarding this rejection, please do not hesitate to reach out to the team.</p><p>Thank you for your understanding.</p><p>Best regards,</p><p>{{organization_signature}}</p></div></div></body></html>',
+    created_at: new Date(),
+  },
+  {
+    slug: 'expense-submitted',
+    name: 'Expense without approval (employee)',
+    subject: 'New Expense Submitted - Action Required',
+    template: '<html><head><style>body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; }</style></head><body><div class="container"><h1 class="header">Expense Raised</h1><div class="message"><p>Dear {{first_name}},</p><p>I hope this email finds you well.</p><p>This is to inform you that an expense has been raised for {{expense_type}}. The details of the expense are as follows:</p><ul><li><b>Date of Expense:</b> {{date}}</li><li><b>Description:</b> {{expense_description}}</li><li><b>Amount:</b> {{currency}} {{amount}}</li><li><b>Category:</b> {{expense_type}}</li></ul><p>Please review the details provided above and let me know if there are any questions or concerns. Your prompt attention to this matter is greatly appreciated.</p><p>If you require any further documentation or clarification, please don\'t hesitate to contact our team.</p><p>Thank you for your cooperation.</p><p>Best regards,</p><p>{{organization_signature}}</p></div></div></body></html>',
+    created_at: new Date(),
+  },
+  {
+    slug: 'expense-employee-approval',
+    name: 'Expense with approval (employee)',
+    subject: 'New Expense Raised - Action Required',
+    template: '<html><head><style>body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; }</style></head><body><div class="container"><h1 class="header">Expense Raised</h1><div class="message"><p>Dear {{first_name}},</p><p>I hope this email finds you well.</p><p>This is to inform you that an expense has been raised for {{expense_type}}. The details of the expense are as follows:</p><ul><li><b>Date of Expense:</b> {{date}}</li><li><b>Description:</b> {{expense_description}}</li><li><b>Amount:</b> {{currency}} {{amount}}</li><li><b>Category:</b> {{expense_type}}</li></ul><p>Please review the details provided above and approve the expense and let me know if there are any questions or concerns. Your prompt attention to this matter is greatly appreciated.</p><p>If you require any further documentation or clarification, please don\'t hesitate to contact our team.</p><p>Thank you for your cooperation.</p><p>Best regards,</p><p>{{organization_signature}}</p></div></div></body></html>',
+    created_at: new Date(),
+  },
+  {
+    slug: 'expense-employer-approval',
+    name: 'Expense with approval (employer)',
+    subject: 'New Expense Raised - Action Required',
+    template: '<html><head><style>body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; }</style></head><body><div class="container"><h1 class="header">Expense Raised</h1><div class="message"><p>Dear {{first_name}},</p><p>I hope this email finds you well.</p><p>This is to inform you that an expense has been raised for {{expense_type}} by {{display_name}}. The details of the expense are as follows:</p><ul><li><b>Date of Expense:</b> {{date}}</li><li><b>Description:</b> {{expense_description}}</li><li><b>Amount:</b> {{currency}} {{amount}}</li><li><b>Category:</b> {{expense_type}}</li></ul><p>Please review the details provided above and approve the expense and let me know if there are any questions or concerns. Your prompt attention to this matter is greatly appreciated.</p><p>If you require any further documentation or clarification, please don\'t hesitate to contact our team.</p><p>Thank you for your cooperation.</p><p>Best regards,</p><p>{{organization_signature}}</p></div></div></body></html>',
+    created_at: new Date(),
+  },
+  {
+    name: 'Forgot Password OTP',
+    slug: 'otp',
+    subject: 'Account Verification - Action Required ',
+    template: '<html> <head> </head> <body> <div style="font-family: Arial, sans-serif; font-size: 16px;"> <p>Dear {{first_name}}, </p> <p>Thank you for creating an account with us. To complete the account verification process, please use the following One-Time Password (OTP): </p> <div style="background-color: #f2f2f2; padding: 10px; margin: 20px 0;"> <p style="font-size: 24px; font-weight: bold; text-align: center;">{{otp}}</p> </div> <p>Please enter this OTP on the account verification page to validate your account. This OTP is valid for a limited time, so please ensure you complete the verification process promptly. </p> <p>If you did not initiate this account creation or have any concerns, please contact our support team immediately. </p> <p> Thank you for choosing our services. </p><p> Best regards,</p> <p>{{organization_signature}}</p> </div> </body> </html>',
+    created_at: new Date(),
+  },
+  {
+    name: 'Random Password For Forgot Password',
+    slug: 'forgot-password',
+    subject: 'Forgot Password - Account Recovery ',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; } </style> </head> <body> <div class="container"> <h1 class="header">Forgot Password - Account Recovery </h1> <div class="message"> <p>Dear {{first_name}}, </p> <p>We noticed that you recently requested to reset your password for your account. Please find below the details for your account recovery: </p> <p>Reset Password Details:</p> <ul> <li><b>Email ID:</b> {{email_id}}</li> <li><b>Password:</b> {{password}}</li> </ul><p>If you have any questions or require further assistance, please contact us.</p> <p>Best regards,</p> <p>{{organization_signature}}</p> </div> </div> </body> </html>',
+    created_at: new Date(),
+  },
+  {
+    name: 'New Placement',
+    slug: 'placement',
+    subject: 'New Placement - Congratulations, {{display_name}}! ',
+    template: '<html><head></head><body style="font-family: Arial, sans-serif; font-size: 16px;"><div style="margin: 20px;"><h1 style="color: #007bff; font-size: 24px; font-weight: bold;">New placement</h1><p>Dear {{first_name}},</p><p>I hope this email finds you well. Congratulations for joining on your placement at {{client_name}}. We have attached the offer letter for the same.</p><p>Below are your placement details:</p><div style="background-color: #f2f2f2; padding: 10px; margin: 10px 0;"><p><b>Project Name: </b>{{project_name}}</p><p><b>Start Date: </b>{{start_date}}</p><p><b>End Date: </b>{{end_date}}</p><p><b>Job Title: </b>{{job_title}}</p><p><b>Client Name: </b>{{client_name}}</p><p><b>End Client Name: </b>{{end_client_name}}</p><p><b>Notice Period: </b>{{notice_period}}</p></div><p>Best regards,</p><p>{{organization_signature}}</p></div></body></html>',
+    created_at: new Date(),
+  },
+  {
+    name: 'Reset Password',
+    slug: 'reset-password',
+    subject: 'Password Reset Confirmation',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } b { font-weight: bold; } </style> </head> <body> <div class="container"> <h1 class="header">New Password</h1> <div class="message"> <p>Dear {{first_name}}, </p> <p>Thank you for resetting your password.</p> <p>We have received a request to reset your password for your account associated with the email address {{email_id}}. Your new password has been set to: {{password}}. </p> <p>For security purposes, we recommend that you log in to your account using this temporary password and change it to a password of your choice. </p><p>If you did not request this password reset, please contact our support team immediately.</p><p> Thank you. </p> <p>Best regards,</p> <p>{{organization_signature}}</p> </div> </div> </body> </html>',
+    created_at: new Date(),
+  },
+  {
+    name: 'Update Password',
+    slug: 'update-password',
+    subject: 'Password Update Confirmation',
+    template: '<html> <head> </head> <body style="font-family: Arial, sans-serif; font-size: 16px;"> <div style="margin: 20px;"> <h1 style="color: #007bff; font-size: 24px; font-weight: bold;">Password Update Confirmation</h1> <p>Dear {{first_name}}, </p> <p>This is to inform you that your password for your account associated with the email address {{email_id}} has been successfully updated.</p> <p> If you have not initiated this password change, please contact our support team immediately to ensure the security of your account. </p> <p>Thank you for choosing {{organization_name}}. </p> <p>Best regards, </p><p>{{organization_signature}}</p> </div> </body> </html>',
+    created_at: new Date(),
+  },
+  {
+    name: 'New Employee Onboarding',
+    slug: 'new-employee-onboard',
+    subject: 'Welcome to {{organization_name}} - Your Onboarding Details',
+    template: '<html> <head> </head> <body style="font-family: Arial, sans-serif; font-size: 16px;"> <div style="margin: 20px;"> <h1 style="color: #007bff; font-size: 24px; font-weight: bold;">Welcome to {{organization_name}} - Your Onboarding Details</h1> <p>Dear {{first_name}}, </p> <p>Congratulations and welcome to the {{organization_name}} team! We are thrilled to have you on board. </p> <p>To get started, please find below your onboarding details: </p> <div style="background-color: #f2f2f2; padding: 10px; margin: 10px 0;"> <p><b>Username: </b>{{user_name}}</p><b>Email ID: </b> {{email_id}} <p><b>Temporary Password: </b>{{password}}</p><b>Login URL: </b>https://{{sub_domain_name}}.{{domain_name}}/login</p> </div> <p>Please use the provided information to access our platform and begin your onboarding process. </p><p> If you have any questions or need assistance, please don\'t hesitate to reach out to our HR department. </p><p> Once again, welcome to the team! We look forward to working with you and supporting your success at {{organization_name}}. </p><p> Best regards, </p> <p>{{organization_signature}}</p> </div> </body> </html>',
+    created_at: new Date(),
+  },
+  {
+    name: 'Enable User Access',
+    slug: 'enable-user-access',
+    subject: 'User Access Enabled - Welcome to {{sub_domain_name}}',
+    template: '<html> <head> </head> <body style="font-family: Arial, sans-serif; font-size: 16px;"> <div style="margin: 20px;"> <h1 style="color: #007bff; font-size: 24px; font-weight: bold;">User Access Enabled - Welcome</h1> <p>Hi {{first_name}},</p> <p>We are delighted to inform you that your user access has been successfully enabled for {{sub_domain_name}}. You can now log in using the following credentials: </p> <div style="background-color: #f2f2f2; padding: 10px; margin: 10px 0;"> <p><b>Username: </b>{{display_name}}</p> <p><b>Password: </b>{{password}}<p> <b>Login URL: </b>https://{{sub_domain_name}}.{{domain_name}}/login</p> </div> <p>Please make sure to keep your login credentials confidential to ensure the security of your account. </p> <p> If you have any questions or need any assistance, please feel free to reach out to our support team. </p> <p> Best regards,</p> <p>{{organization_signature}}</p> </div> </body> </html>',
+    created_at: new Date(),
+  },
+  {
+    name: 'Disable User Access',
+    slug: 'disable-user-access',
+    subject: 'User Access Disabled - Important Information',
+    template: '<html> <head> </head> <body style="font-family: Arial, sans-serif; font-size: 16px;"> <div style="margin: 20px;"> <h1 style="color: #007bff; font-size: 24px; font-weight: bold;">User Access Disabled - Important Information</h1> <p>Dear {{first_name}}, </p> <p>We regret to inform you that your user access for {{sub_domain_name}} has been disabled as per your request. </p> <p>Please take note of the following details:</p> <ul> <li>Name: {{display_name}}</li> <li>Email: {{email_id}}</li> </ul> <p>Your account and associated privileges have been revoked, and you will no longer be able to access the platform. </p><p> If you have any questions or concerns regarding this action, please reach out to our support team. </p><p> Thank you for your understanding. </p><p> Best regards, </p><p>{{organization_signature}}</p> </div> </body> </html>',
+    created_at: new Date(),
+  },
+  {
+    name: 'Timesheet Approval Pending',
+    slug: 'timesheet-approval-pending',
+    subject: 'Timesheet Approval Pending - Action Required',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; margin: 20px; } h1 { color: #007bff; font-size: 24px; font-weight: bold; } ul { list-style-type: none; padding: 0; } li { margin-bottom: 10px; } .timesheet-details { background-color: #f2f2f2; padding: 10px; margin-bottom: 10px; } </style> </head> <body> <h1>Pending Timesheet - Action Required</h1> <p>Dear {{first_name}},</p> <p>We hope this email finds you well. We would like to inform you that your timesheet for the period from {{from_date}} to {{to_date}} is pending approval. Please review and submit your timesheet as soon as possible to ensure timely processing. </p> <p>Timesheet Details:</p> <div class="timesheet-details"> <ul> <li><b>Status:</b> {{timesheet_status}}</li> </ul> </div> <p>Your prompt attention to this matter is greatly appreciated. If you have any questions or need further assistance, please don\'t hesitate to reach out to our team. </p> <p> Thank you for your cooperation. </p><p> Best regards, </p> <br><br> <p>{{organization_signature}}</p> </body> </html>',
+    created_at: new Date(),
+  },
+  {
+    name: 'Timesheet Approved Notification',
+    slug: 'timesheet-approved-notification',
+    subject: 'Your Timesheet Has Been Approved!',
+    template: '<html> <head> </head> <body style="font-family: Arial, sans-serif; font-size: 16px;"> <div style="margin: 20px;"> <h1 style="color: #007bff; font-size: 24px; font-weight: bold;">Your Timesheet Has Been Approved!</h1> <p>Hi {{first_name}},</p> <p>Great news! We wanted to let you know that your timesheet for the period of {{from_date}} to {{to_date}} has been successfully approved. Thank you for submitting it on time and ensuring accurate records of your work. </p> <p>Here are the details of your approved timesheet: </p> <ul><li><b>Status:</b> {{timesheet_status}}</li>  <li><b>Approval Date:</b> {{timesheet_approval_date}}</li> </ul> <p>We appreciate your dedication and commitment to maintaining accurate timesheets. Your efforts contribute to the smooth operations of our organization.</p> <p>If you have any questions or need further assistance, please don\'t hesitate to reach out. Our team is here to support you.</p> <p>Thank you again for your hard work! </p><p>Best regards, </p> <p>{{organization_signature}}</p> </div> </body> </html>',
+  },
+  {
+    name: 'Send Invoice',
+    slug: 'send-invoice',
+    subject: 'Invoice',
+    template: '<html><head><style>body{font-family:Arial,sans-serif;font-size:16px;}.container{margin:20px;}.header{color:#007bff;font-size:24px;font-weight:bold;margin-bottom:10px;}.message{margin-top:10px;}ul{margin-top:0;padding-left:20px;}</style></head><body><div class="container"><h1 class="header">Invoice</h1><div class="message"><p>Hi {{first_name}},</p><p>I hope this email finds you well.</p><p>Attached, please find the invoice for the services provided to you.</p><p>Below are the details of the invoice:</p><ul><li><b>Invoice Number:</b> [Invoice Number]</li><li><b>Date of Invoice:</b> [Date]</li><li><b>Due Date:</b> [Due Date]</li><li><b>Amount Due:</b> [Total Amount]</li></ul><p>Please review the invoice and let us know if there are any discrepancies or if you require any further information.</p><p>Please ensure that the invoice is settled by the due date to avoid any late payment charges.</p><p>If you have any questions or need assistance, feel free to reach out to us.</p><p>Thank you for your prompt attention to this matter. We look forward to continuing our partnership.</p><p>Best regards,</p><p>{{organization_signature}}</p></div></div></body></html>',
+  },
+  {
+    name: 'Invoice Approval Pending',
+    slug: 'invoice-approval-pending',
+    subject: 'Invoice Approval Pending - Action Required',
+    template: '<html> <head> </head> <body style="font-family: Arial, sans-serif; font-size: 16px;"> <div style="margin: 20px;"> <h1 style="color: #007bff; font-size: 24px; font-weight: bold;">Invoice Approval Pending - Action Required</h1> <p>Dear {{first_name}},</p> <p>We hope this email finds you well. We would like to inform you that your invoice dated {{invoice_date}} with the number {{invoice_number}} is currently pending approval. The details of the invoice are as follows: </p> <p>Invoice Details:</p> <ul> <li><b>Invoice Amount:</b> {{invoice_amount}}</li> <li><b>Invoice Due Date:</b> {{invoice_due_date}}</li> </ul> <p>We kindly request you to review the invoice and take the necessary action to approve it. Your prompt attention to this matter is greatly appreciated.</p> <p>If you have any questions or need further assistance, please don\'t hesitate to reach out to our team.</p> <p>Thank you for your cooperation. </p><p> Best regards, </p> <p>{{organization_signature}}</p> </div> </body> </html> ',
+  },
+  {
+    name: 'Self Service Request (Employee)',
+    slug: 'self-service-request-employee',
+    subject: 'Self-Service Request Confirmation - Reference ID: {{reference_id}}',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .title { color: #007bff; font-size: 24px; font-weight: bold; } </style> </head> <body> <div class="container"> <h1 class="title">Self-Service Request Confirmation - Reference ID: {{reference_id}}</h1> <p>Dear {{first_name}}, </p> <p>Thank you for submitting your self-service request. We have received your request with the following details: </p> <ul> <li><b>Reference ID:</b> {{reference_id}}</li> <li><b>Name:</b> {{display_name}}</li></ul> <p>Our team is currently reviewing your request and will process it as soon as possible. If any further information or action is required from your end, we will contact you using the contact information provided. </p> <p> We appreciate your patience and understanding. If you have any questions or need assistance, please feel free to reach out to our support team. </p><p> Best regards, </p> <p>{{organization_signature}}</p> </div> </body> </html>',
+  },
+  {
+    name: 'Self Service Request (Employer)',
+    slug: 'self-service-request-employer',
+    subject: 'Self-Service Request Confirmation - Reference ID: {{reference_id}}',
+    template: '<html><head><style>body {font-family: Arial, sans-serif;font-size: 16px;}.container {margin: 20px;}.title {color: #007bff;font-size: 24px;font-weight: bold;}</style></head><body><div class="container"><h1 class="title">New Ticket Raised - Reference ID: {{reference_id}}</h1><p>Dear Team,</p><p>A new ticket has been raised and requires your attention. Below are the details:</p><ul><li><b>Reference ID:</b> {{reference_id}}</li><li><b>Name:</b> {{display_name}}</li></ul><p>Please review the ticket and take appropriate action as soon as possible. Your prompt attention to this matter is greatly appreciated.</p><p>Best regards,</p><p>{{organization_signature}}</p></div></body></html>',
+  },
+  {
+    name: 'Timesheet Rejected',
+    slug: 'timesheet-rejected',
+    subject: 'Timesheet Rejected - Action Required',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; } .message { margin-top: 10px; } ul { list-style-type: none; margin: 0; padding: 0; } li { margin-bottom: 5px; } </style> </head> <body> <div class="container"> <h1 class="header">Timesheet Rejected - Action Required</h1> <div class="message"> <p>Dear {{first_name}},</p> <p>We regret to inform you that your timesheet for the period {{from_date}} to {{to_date}} has been rejected. We kindly request you to review and make the necessary amendments as soon as possible.</p> <p>Timesheet Details:</p> <ul>  <li><li><li><b>Timesheet Reference ID:</b> {{timesheet_reference_id}}</li><b>Timesheet Status:</b> {{timesheet_status}}</li> </ul> <p>Please take the following actions:</p><ul> <li>1. Double-check the accuracy of the entered hours and project details.</li> <li><li><li> 2. Correct any errors or omissions in the timesheet.<li>3. Resubmit the revised timesheet through the Workforce platform. </li> </ul> <p>Should you need any assistance or clarification regarding the rejection, please reach out to our HR team at {{organization_signature}}. We are here to support you throughout this process.</p><p>Thank you for your prompt attention to this matter. We appreciate your dedication to maintaining accurate records of your work. </p> <p>Best regards, </p> <p>{{organization_signature}}</p> </div> </div> </body> </html>',
+  },
+  {
+    name: 'Timesheet Reminder',
+    slug: 'timesheet-reminder',
+    subject: 'Timesheet Reminder - Submission Required ',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; } </style> </head> <body> <div class="container"> <h1 class="header">Timesheet Reminder - Submission Required</h1> <div class="message"> <p>Dear {{first_name}},</p> <p>This is a friendly reminder to submit your timesheet for the period from {{from_date}} to {{to_date}}. We kindly request that you complete and submit your timesheet by the end of the day to ensure accurate and timely processing. </p> <p>Timesheet Details:</p> <ul>  <li><b>Timesheet Reference ID:</b> {{timesheet_reference_id}}</li> <li><b>Timesheet Status:</b> {{timesheet_status}}</li> </ul> <p>Your attention to this matter is greatly appreciated. Should you have any questions or encounter any difficulties, please feel free to reach out to our team for assistance. </p> <p> Thank you for your cooperation. </p> <p> Best regards, </p><p>{{organization_signature}}</p> </div> </div> </body> </html>',
+  },
+  {
+    name: 'Invoice Reminder',
+    slug: 'invoice-reminder',
+    subject: 'Friendly Reminder: Outstanding Invoice',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; } </style> </head> <body> <div class="container"> <h1 class="header">Invoice Reminder - Action Required</h1> <div class="message"> <p>Hi {{first_name}},</p> <p>We hope this email finds you well. We wanted to bring to your attention that there is an outstanding invoice pending for your attention. Please review the details below:</p><ul> <li><b>Invoice Number:</b> {{invoice_number}}</li><li><b>Invoice Drafted On:</b> {{drafted_on}}</li> <li><b>Invoice Status:</b> {{invoice_status}}</li><li><b>Invoice Amount:</b> {{invoice_amount}}</li></ul> <p>Prompt payment is appreciated and ensures the smooth operation of our business. To facilitate the payment process, please follow the instructions outlined in the invoice.</p> <p>If you have any questions or need assistance regarding this invoice, please feel free to contact our dedicated support team. We are here to help. </p><p>Thank you for your attention to this matter, and we appreciate your prompt resolution of this outstanding invoice.</p><p>Best regards,</p><p>{{organization_signature}}</p> </div> </div> </body> </html>',
+  },
+  {
+    name: 'Invoice Rejected',
+    slug: 'invoice-rejected',
+    subject: ' Invoice Rejection Notice',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } b { font-weight: bold; } </style> </head> <body> <div class="container"> <h1 class="header">Invoice Rejected - Action Required</h1> <div class="message"> <p>Dear {{display_name}},</p> <p>We regret to inform you that your invoice dated {{invoice_date}} with the number {{invoice_number}} has been rejected. </p> <ul><li><b>Invoice Amount:</b> {{invoice_amount}}</li> <li><b>Invoice Due Date:</b> {{invoice_due_date}}</li> </ul> <p>Please review the invoice and make the necessary corrections before resubmitting it for approval. If you have any questions or need further assistance, please contact our support team. </p> <p>We appreciate your understanding and cooperation. </p><p> Best regards, </p> <p>{{organization_signature}}</p> </div> </div> </body> </html>',
+  },
+  {
+    name: 'Payment Received',
+    slug: 'payment-received',
+    subject: ' Payment Received - Thank You! ',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; } </style> </head> <body> <div class="container"> <h1 class="header"> Payment Received - Thank You! </h1> <div class="message"> <p>Hi {{client_name}},</p> <p>We hope this email finds you well. We are writing to inform you that we have successfully received your payment for the outstanding invoice. We greatly appreciate your timely payment.</p> <p>Here are the details of your payment :</p> <ul> <li><b>Invoice Number:</b> {{invoice_number}}</li> <li><b>Payment Amount:</b> {{payment_amount}}</li><li><b>Total Amount Payable:</b> {{total_amount_payable}}</li> <li><b>Balance Amount:</b> {{balance_amount}}</li>  <li><b>Payment Date:</b> {{payment_date}}</li> <li><b>Payment Mode:</b> {{payment_mode}}</li> </ul> <p>We have updated our records accordingly, and the outstanding balance on your account has been adjusted. If you have any further questions or concerns regarding your payment or account status, please do not hesitate to reach out to our team.</p> <p>Thank you once again for your prompt payment. We value your business and look forward to serving you in the future. </p></p>Best regards,</p><p>{{organization_signature}}</p> </div> </div> </body> </html>',
+  },
+  {
+    name: 'Expense Notification',
+    slug: 'expense-notification',
+    subject: 'Expense Notification - Action Required ',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; } </style> </head> <body> <div class="container"> <h1 class="header"> Expense Notification - Action Required </h1> <div class="message"> <p>Dear {{approver_name}}, </p> <p>This is to inform you that an expense report has been submitted for your review and approval. Please find the details below: </p> <p>Expense Details:</p> <ul> <li><b>Expense ID: </b> {{expense_id}} </li> <li><b>Expense Date:</b> {{expense_date}}</li> <li><b>Expense Amount:</b> {{expense_amount}}</li> <li><b>Expense Reference Id :</b> {{reference_id}}</li> <li><b>Expense Status:</b> {{expense_status}} </li> </ul> <p>Kindly review the expense report and take the necessary actions. You can access the expense report in the Workforce platform. </p> <p>If you have any questions or require further information, please don\'t hesitate to reach out to our finance team at {{organization_signature}}. We appreciate your prompt attention to this matter. </p><p> Thank you for your cooperation. </p> <p>{{organization_signature}}</p> </div> </div> </body> </html>',
+  },
+  {
+    name: 'Invoice Generated',
+    slug: 'invoice-generated',
+    subject: 'Invoice Generated - {{invoice_number}} ',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; } </style> </head> <body> <div class="container"> <h1 class="header">Invoice Generated - {{invoice_number}}  </h1> <div class="message"> <p>Hi {{display_name}},</p> <p>We hope this email finds you well. We are writing to inform you that an invoice has been generated for your recent purchase/service. </p> <p>Here are the details of the invoice:</p> <ul> <li><b>Invoice Number:</b> {{invoice_number}}</li> <li><b>Invoice Date:</b> {{invoice_date}}</li> <li><b>Invoice Due Date:</b> {{invoice_due_date}}</li> <li><b>Invoice Amount:</b> {{invoice_amount}}</li> <li><b>Invoice Status:</b> {{invoice_status}}</li> </ul> <p>Please review the above invoice details to this email for more information. Kindly ensure that payment is made by the due date mentioned to avoid any inconvenience. </p><p>If you have any questions or concerns regarding the invoice or your account, please feel free to reach out to our team. We are always here to assist you. </p><p>Thank you for choosing our services. We appreciate your business and look forward to serving you again in the future.</p><p>Best regards, </p><p>{{organization_signature}}</p> </div> </div> </body> </html>',
+  },
+  {
+    name: 'Timesheet Generated',
+    slug: 'timesheet-generated',
+    subject: 'Timesheet Generated',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; } </style> </head> <body> <div class="container"> <h1 class="header">Timesheet Generated </h1> <div class="message"> <p>Dear {{first_name}}, </p> <p>We hope this email finds you well. We wanted to inform you that your timesheet for the period {{from_date}} to {{to_date}} has been successfully generated. </p> <p>Timesheet Details:</p> <ul> <li><b>Timesheet Refrence Id:</b> {{timesheet_reference_id}}</li> <li><b>Total Hours:</b> {{timesheet_total_hours}}</li> <li><b>Status:</b> {{timesheet_status}}</li> </ul> <p>Please review the timesheet and ensure its accuracy. If you notice any discrepancies or have any questions, please reach out to our HR department. </p> <p> Thank you for your prompt attention to this matter. </p> <p> Best regards, <p>{{organization_signature}}</p> </div> </div> </body> </html> ',
+  },
+  {
+    name: 'Consultant Invitation',
+    slug: 'consultant-invitation',
+    subject: 'Invitation to Join as a Consultant at {{Organization Name}}',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } b { font-weight: bold; } </style> </head> <body> <div class="container"> <h1 class="header">Invitation to Join as a Consultant at {{Organization Name}}</h1> <div class="message"> <p>Dear {{first_name}},</p> <p>We hope this email finds you well. We are excited to extend an invitation for you to join our team as a Consultant at {{organization_name}}. We believe that your expertise and skills would greatly contribute to our projects and initiatives. </p><p>As a Consultant, you will be responsible for {{job_title}} and working closely with our team to deliver high-quality results for our clients. We value your unique perspective and look forward to the fresh insights you will bring to our organization. </p> <p>Please find the invitation details below:</p> </div> <div class="message"> <p><b>Invitation URL:</b> <a href="{{invitation_url}}">{{invitation_url}}</a></p> <p><b>Expiry Date:</b> {{expiry_date}}</p> </div> <div class="message"> <p>We kindly request you to click on the invitation URL and complete the onboarding process before the expiry date. If you have any questions or need further assistance, please don\'t hesitate to reach out to our team. </p> <p>We are thrilled to have you join us and are confident that your contributions will make a significant impact. Welcome to the {{organization_name}} family! </p> <p> Best regards, </p> </div> <div class="message"> <p>Best regards,</p> <p>{{organization_signature}}</p> </div> </div> </body> </html>',
+  },
+  {
+    name: 'Consultant Invitation Reminder',
+    slug: 'consultant-invitation-reminder',
+    subject: 'Invitation to Join {{organization_name}}! ',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } b { font-weight: bold; } </style> </head> <body> <div class="container"> <h1 class="header">Invitation to Join {{organization_name}} !</h1> <div class="message"> <p>Dear {{first_name}}, </p> <p>We are excited to extend an invitation for you to join our team at {{organization_name}}! Congratulations on becoming a part of our dynamic workforce. </p> <p>As {{position_title}}, your skills and expertise will play a crucial role in driving our success. We are confident that your contributions will make a positive impact on our projects and initiatives. </p><p>Here are your credentials </p><p>Name: {{display_name}} <br><br> Email: {{email_id}} </p> </div> <div class="message"> <p>To complete the onboarding process, please click on the following link:</p> <p><a href="{{onboarding_link}}">{{onboarding_link}}</a></p><p>This will guide you through the necessary steps to get started. </p> </div> <div class="message"> <p>If you have any questions or need assistance during the onboarding process, please don\'t hesitate to reach out to our HR team at {{organization_name}}. We are here to support you and ensure a smooth transition into your new role. </p> <p>We look forward to welcoming you to the {{organization_name}} family and witnessing your growth and achievements within our organization. </p><p> Best regards, </p> <p>{{organization_signature}}</p> </div> </div> </body> </html> ',
+  },
+  {
+    name: "Bill Reminder",
+    slug: 'bill-reminder',
+    subject: "Friendly Reminder: Outstanding Bills",
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; } </style> </head> <body> <div class="container"> <h1 class="header">Bill Reminder - Action Required</h1> <div class="message"> <p>Hi {{client_name}},</p> <p>We hope this email finds you well. We wanted to bring to your attention that there is an outstanding bill pending for your attention. Please review the details below:</p><ul> <li><b>Bill Number:</b> {{bill_reference_id}}</li><li><b>Bill Date:</b> {{bill_date}}</li> <li><b>Sub Total:</b> {{sub_total_amount}}</li><li><b>Due Date:</b> {{bill_due_date}}</li><li><b>Bill Amount:</b> {{bill_amount}}</li></ul> <p>Prompt payment is appreciated and ensures the smooth operation of our business. To facilitate the payment process, please follow the instructions outlined in the bill.</p> <p>If you have any questions or need assistance regarding this bill, please feel free to contact our dedicated support team. We are here to help. </p><p>Thank you for your attention to this matter, and we appreciate your prompt resolution of this outstanding invoice.</p><p>Best regards,</p><p>{{organization_signature}}</p> </div> </div> </body> </html>',
+  },
+  {
+    name: 'Bill Payment',
+    slug: 'bill-payment',
+    subject: 'Bill Payment - {{bill_number}}',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; } </style> </head> <body> <div class="container"> <h1 class="header">Bill Payment Paid</h1> <div class="message"> <p>Hi {{vendor_name}},</p> <p>We hope this email finds you well. We wanted to bring to your attention that we have made a payment for your bill. Please review the details below:</p><ul> <li><b>Bill Number:</b> {{bill_reference_id}}</li><li><b>Bill Date:</b> {{bill_date}}</li><li><b>Due Date:</b> {{bill_due_date}}</li><li><b>Bill Amount:</b> {{total_amount}}</li><li><b>Balance Amount:</b> {{balance_amount}}</li></ul><p>If you have any questions or need assistance regarding this bill, please feel free to contact our dedicated support team. We are here to help. </p><p>Thank you for your attention to this matter, and we appreciate your prompt resolution of this outstanding invoice.</p><p>Best regards,</p><p>{{organization_signature}}</p> </div> </div> </body> </html>',
+  },
+  {
+    name: 'Questionnaire',
+    slug: 'immigration-questionnaire',
+    subject: 'questionnaire request',
+    template: '<html> <head> <style> body { font-family: Arial, sans-serif; font-size: 16px; } .container { margin: 20px; } .header { color: #007bff; font-size: 24px; font-weight: bold; margin-bottom: 10px; } .message { margin-top: 10px; } ul { margin-top: 0; padding-left: 20px; } </style> </head> <body> <div class="container"> <h1 class="header">Please fill the Questionnaire</h1> <div class="message"> <p>Hi {{display_name}},</p> <p>We hope this email finds you well.Please fill the details in the form from the given link to continue your H1B immigration process for your immigration case {{immigration_reference_id}} processing in organization {{organization_name}} thenfirst name is {{first_name}} and last name is {{last_name}} the urlfor questionnaire is {{url}} <p>Best regards,</p><p>{{organization_signature}}</p> </div> </div> </body> </html>',
+},
+];
+
+const mailTemplateSeed = async (tenant) => {
+  await tenant('mail_template').insert(mailTemplateData);
+};
+
+module.exports = mailTemplateSeed;

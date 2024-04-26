@@ -1,0 +1,200 @@
+<html>
+
+<head>
+    <style>
+        body {
+            font-size: 10pt;
+            padding: 10px
+        }
+
+        p {
+            margin: 0pt;
+        }
+
+        table.items {
+            border: 0.1mm solid #e7e7e7;
+        }
+
+        td {
+            vertical-align: top;
+        }
+
+        thead {
+            text-align: center;
+            padding: 6px 2px;
+            color: #F7F7FA;
+            background-color: #2A3042;
+        }
+
+
+        .items td {
+            border-left: 0.1mm solid #e7e7e7;
+            border-right: 0.1mm solid #e7e7e7;
+        }
+
+        table thead td {
+            text-align: center;
+            border: 0.1mm solid #e7e7e7;
+        }
+
+        .items td.blanktotal {
+            background-color: #EEEEEE;
+            border: 0.1mm solid #e7e7e7;
+            background-color: #FFFFFF;
+            border: 0mm none #e7e7e7;
+            border-top: 0.1mm solid #e7e7e7;
+            border-right: 0.1mm solid #e7e7e7;
+        }
+
+        .items td.totals {
+            text-align: right;
+            border: 0.1mm solid #e7e7e7;
+        }
+
+        .items td.cost {
+            text-align: "." center;
+        }
+    </style>
+</head>
+
+<body>
+   <table width="100%" cellpadding="10">
+    <tr>
+        <td> <img src="<%=payments_data.logo%>" alt="watermark" style="width: 75px;"></td>
+        <td width="100%" style="text-align: left; padding: 10px;">
+            <div>
+                <strong>
+                    <%=payments_data.organization_name%>
+                </strong>
+                <p style="padding-top: 10px">
+                    <%=payments_data.organization_address%>
+                </p>
+                <p>
+                    <%=payments_data.organization_address_cities%>
+                </p>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<!-- Add a horizontal line below the table -->
+<hr style="border: 1px solid #808080;">
+
+<table width="100%" cellpadding="10">
+        <tr>
+            <td style="text-align: left; padding: 10px">
+                <p style=" padding-bottom: 5px">Payment ID : <%=payments_data.payment_reference_id%></p>
+                <p style=" padding-bottom: 5px">Payment Date : <%=payments_data.payment_date%></P>
+                <p style=" padding-bottom: 5px">Payment Mode : <%=payments_data.payment_mode%></p>
+                <p style=" padding-bottom: 5px">Reference Number : <%=payments_data.payment_no%></p>
+            </td>
+            <td style="text-align: center; padding: 10px;">
+                <div style="width: 50%;">
+                    <div style="background-color: #309b30; font-size: 20px">
+                        <p style="padding: 5px; padding-top: 10px; ">Amount Paid</p>
+                        <p style="padding: 5px; padding-bottom: 10px">$ <%=payments_data.total_received_amount%></p>
+                    </div>
+                    <p style="padding: 5px;"><%=payments_data.amount_in_words%></p>
+                </div>
+            </td>            
+        </tr>
+    </table>
+    
+    <table width="100%" cellpadding="10">
+        <tr>
+            <td><strong>Payment From</strong></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>
+                <p style="padding-top: 5px; font-size: 20px" ><%=payments_data.vendor_name%></p>
+                <p style="padding-top: 5px">
+                    <%=payments_data.vendor_address%>
+                </P>
+                <p style="padding-bottom: 5px;">
+                    <%=payments_data.vendor_cities%>
+                </p>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <hr style="border: 0.1px solid #808080	;">
+    <table class="items" width="100%" style="font-size: 14px; border-collapse: collapse;" cellpadding="8">
+        <thead>
+            <tr>
+                <td width="15%" style="text-align: left;"><strong>S.NO</strong></td>
+                <td width="45%" style="text-align: left;"><strong>Bill Number</strong></td>
+                <td width="20%" style="text-align: left;"><strong>Bill Amount</strong></td>
+                <td width="20%" style="text-align: left;"><strong>Payment Received</strong></td>
+                <td width="20%" style="text-align: left;"><strong>Balance Amount</strong></td>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- ITEMS HERE -->
+            <% if (payments_data.body_data.length> 0) { %>
+                <% payments_data.body_data.forEach(data=> {%>
+                    <tr>
+                        <td style="padding: 5px 7px; line-height: 20px;">
+                            <%= data.serial_no %>
+                        </td>
+                        <td style="padding: 5px 7px; line-height: 20px;">
+                            <%= data.bill_number %>
+                        </td>
+                        <td style="padding: 5px 7px; line-height: 20px;">
+                            <%= data.bill_amount %>
+                        </td>
+                        <td style="padding: 5px 7px; line-height: 20px;">
+                            <%= data.received_amount %>
+                        </td>
+                        <td style="padding: 5px 7px; line-height: 20px;">
+                            <%= data.balance_amount %>
+                        </td>
+                    </tr>
+                    <% });%>
+                        <% }%>
+                            <style>
+                                .items tbody tr:not(:last-child) {
+                                    border-bottom: 1px solid #000;
+                                    /* You can adjust the color and style of the line as needed */
+                                }
+                            </style>
+        </tbody>
+
+    </table>
+    <br>
+    <table width="100%" style="font-size: 14px;">
+        <tr>
+            <!--<td></td>-->
+            <td style=" text-align: right; line-height: 20px;">Total Bill Amount : $ <%=payments_data.total_bill_amount%>
+            </td>
+
+        </tr>
+        <tr>
+            <!--<td></td>-->
+            <td style="text-align: right; line-height: 20px;">Total Received Amount : $ <%=payments_data.total_received_amount%>
+            </td>
+
+        </tr>
+        <tr>
+            <!--<td></td>-->
+            <td style="text-align: right; line-height: 20px;">Total Balance Amount : $ <%=payments_data.total_balance_amount%>
+            </td>
+
+        </tr>
+    </table>
+    <br>
+    <table width="100%" style="font-family: sans-serif; font-size: 14px;">
+        <br>
+        <tr>
+            <td>
+                <P><strong>Notes</strong></p>
+                <p>
+                    <%=payments_data.notes%>
+                </p>
+            </td>
+        </tr>
+        <br>
+    </table>
+</body>
+
+</html>

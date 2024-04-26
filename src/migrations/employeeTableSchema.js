@@ -1,0 +1,491 @@
+const employeeTableSchema = async (tenant) => {
+
+    await tenant.schema
+        .createTable('employee', (table) => { // Employee table schema
+            table.uuid('id').defaultTo(tenant.raw('gen_random_uuid()')).primary().comment('employee id')
+            table.string('reference_id', 25).comment('Random generated Employee reference id')
+            table.string('first_name', 100).comment('First name of the employee')
+            table.string('middle_name', 100).comment('Middle name of the employee')
+            table.string('last_name', 50).comment('last name of the employee')
+            table.string('display_name', 250).comment('Display name of the employee')
+            table.string('contact_number', 12)
+            table.string('email_id', 320)
+            table.string('alternate_contact_number', 12)
+            table.string('alternate_email_id', 320)
+            table.date('dob').comment('Date of birth of employee')
+            table.string('gender', 20).comment('Male or Female')
+            table.string('profile_picture_url').comment('Profile picture URL')
+            table.string('profile_path').comment('Profile picture URL')
+            table.tinyint('aws_profile_s3_status').defaultTo(0).comment('0 for New, 1 for Pushed to AWS, 2 for Error')
+            table.integer('employment_type_id').index().comment('Employment type of employee.')
+            table.integer('employee_category_id').index().comment('Employee comes under which category.')
+            table.datetime('date_of_joining').comment('Date of joining in our organization')
+            table.tinyint('is_us_citizen').defaultTo(0).index().comment('0 for No, 1 for Yes, 2 for NA')
+            table.integer('visa_type_id').index()
+            table.string('referral_source', 100).comment('From where the candidate is referred about')
+            table.uuid('reffered_employee_id').comment('If candidate is referred by out organization employee or consultant or contractor we are going to map them as a referral').index()
+            table.string('referral_source_name', 100).comment('If referred by other than our organization then we will capture source name. If any social medial referred then they will enter the social medial post name.')
+            table.string('ssn', 12).index().comment('SSN number')
+            table.uuid('reporting_manager_id').comment('Reporting manager ID. A manager is an employee in the organization so employee id will be stored here.')
+            table.integer('role_id').index().comment('Role ID of that partcular employee')
+            table.integer('department_id').index().comment('Department id')
+            table.integer('team_id').index().comment('Team id')
+            table.boolean('is_super_admin').index().comment('If admin, the employee will have all the application access').defaultTo(false)
+            table.boolean('is_tenant_owner').index().comment('Owner of the organization').defaultTo(false)
+            table.specificType('hours_worked', 'double precision').defaultTo(0.00).comment('Hours worked by the Employee')
+            table.specificType('balance_amount', 'double precision').defaultTo(0.00).comment('total balance amount to be paid to the employee')
+            table.specificType('standard_pay_amount', 'double precision').defaultTo(0.00).comment('Setting up the standard pay for the employee. By default this pay will be automatically to payroll pay')
+            table.boolean('enable_login').index().comment('If an employee is enable login then he consider as a user and can able to login to the application.')
+            table.integer('on_boarding_type').comment('Type of onboarding.1 Tenant owner, 2 Behalf onboarding and 3 self onboarding')
+            table.boolean('is_active').index().defaultTo(false).comment('active status of account')
+            // table.enu('status', ['Active', 'In Active']).comment('Employee status: Active, or In Active');
+            table.enu('status', ['Active', 'In Active']).index().defaultTo('Active').notNullable();
+            table.boolean('enable_payroll').defaultTo(false).comment('Enable Payroll Status')
+            table.boolean('enable_balance_sheet').defaultTo(false).comment('Enable Balance Sheet Status')
+            table.integer('payroll_config_settings_id').index().comment('payroll config settings id')
+            table.enu('sub_status', ['Marketing', 'Placed']).defaultTo('Marketing').comment('Employee Sub status: Marketing, Placed');
+            table.timestamp('last_login_time').comment('Last login time of the employee')
+            table.boolean('is_logged_in')
+            table.tinyint('failed_login_attempts').unsigned().comment('If fail login attempts reaches 5 then automatically account will be blocked for 15min').defaultTo(0)
+            table.string('password').comment('Password to login')
+            table.timestamp('password_changed_at').comment('For every 1 month force the user to update the password for security reasons')
+            table.timestamp('login_expire_at').comment('self service employee login expire time')
+            table.integer('otp').comment('Random generated otp for forgot password')
+            table.integer('otp_attempts').comment('Number fail attempts for OTP verificaton')
+            table.date('rejoin_date').comment('If employee is resigned then he can rejoin the organization')
+            table.date('relieving_date').comment('If employee is resigned then his relieving date from the organization')
+            table.boolean('temp_password').comment('If user is login with temperory password force the user to change the password. Temp password will be true for new user created and forgot password').nullable()
+            table.text('access_token').index().comment('access token for the employee')
+            table.text('refresh_token').comment('refresh token for the employee')
+            table.text('fcm_token').defaultTo(false).comment('FCM token for the employee login APP')
+            table.string('profile_picture_path').comment('Path of the uploaded picture')
+            table.boolean('aws_s3_status').defaultTo(false).comment('AWS uploaded status')
+            table.tinyint('e_verified').defaultTo(0).comment('Employee verification status 0 - Not verified, 1 - Verified, 2 - Pending 3 - Rejected')
+            table.tinyint('accept_offer').defaultTo(1).comment('0 is offer letter send. 1 is onboard is accept. 2 is offer letter accepted. This flag applicable when on_boarding_type is set to 3. For remaining on_boarding_types defualt will be marked as accepted')
+            table.tinyint('onboard_status').defaultTo(1).comment('0 is onboard pending. 1 is onboard is done. Only onboarding compldeted employees are allowed display in the dashboard. These employees will be mark as inactive till they onboard. on_boarding_types 1 and 2, defualt will be marked as onboarded').unsigned().notNullable();
+            table.string('offer_letter_path').comment('Path of uploaded offer letter')
+            table.string('offer_letter_url').comment('URL of the path')
+            table.boolean('offer_letter_aws_s3_status').defaultTo(false).comment('AWS uploaded status')
+            table.date('last_working_day').comment('lst working day of the employee')
+            table.text('linkedin_url').comment('Linkedin url')
+            table.text('twitter_url').comment('Twitter url')
+            table.string('blood_group', 30).comment('Blood group')
+            table.string('marital_status', 30).comment('Marital status')
+            table.enu('drafted_stage', ['General Details', 'Documents', 'Pay Configuration']).comment('To mark the employee as drafted at perticular stage')
+            table.uuid('preferable_vendor_id').index().comment('Vendor id if the employee is contractor')
+            table.specificType('vendor_price_per_hour', 'double precision').defaultTo(0.00).comment('price per hour for the vendor')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('emergency_contact_information', (table) => { // Employee contact information
+            table.increments().comment('Emergency Contact Information ID')
+            table.uuid('employee_id').index().notNullable().comment('Employee ID')
+            table.string('name', 100).comment('Name of the contact')
+            table.integer('relationship_id').index().comment('Relationship ID of the contact')
+            table.string('contact_number', 20).comment('Contact number of the contact')
+            table.string('email_id', 320).comment('Email of the contact')
+            table.string('address_1', 255).comment('Address_1 of the contact')
+            table.string('address_2', 255).comment('Address_2 of the contact')
+            table.string('city', 50).comment('City of the contact')
+            table.integer('state_id').index().comment('State ID of the contact')
+            table.integer('country_id').index().comment('Country ID of the contact')
+            table.string('zip_code', 10).comment('Zipcode of the contact')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_vacation', (table) => { // Employee vacation information
+            table.increments().comment('Employee Vacation ID')
+            table.uuid('employee_id').index().notNullable().comment('Employee ID')
+            table.string('name', 150).notNullable().comment('vacation name')
+            table.date('from_date').comment('vacation start date')
+            table.date('to_date').comment('vacation end date')
+            table.tinyint('do_not_disturb').comment('1 - No, 2 - Yes, 3 - Emergency')
+            table.time('preferred_from_time').comment('preferred from time')
+            table.time('preferred_to_time').comment('preferred to time')
+            table.string('time_zone').comment('time zone')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_skill_details', (table) => { // Employee Skill Details Table
+            table.increments().comment('Employee Skill Details ID')
+            table.uuid('employee_id').index().notNullable().comment('Employee_id')
+            table.integer('skill_id').index().notNullable().comment('Skill id of an employee')
+            table.string('experience_years', 20).comment('Years of experience in that skill')
+            table.string('certification', 255).comment('If any certification completed that partcular link or id')
+            table.date('certification_date').comment(' Date of certified')
+            table.boolean('certification_status').comment('Some certification have expiry date so storing expiry of the certification status , 0 for Expired , 1 for Active ')
+            table.string('expertise', 50).nullable().comment('Expertise for that skill');
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_education_details', (table) => { // Employee Education Details Table
+            table.increments().comment('Employee Education Details ID')
+            table.uuid('employee_id').index().notNullable()
+            table.integer('education_level_id').index().comment(' education level ID')
+            table.string('field_of_study', 255).comment('Field of study')
+            table.string('university_name', 255).comment('Name of the university')
+            table.date('start_date').comment('education start date')
+            table.date('end_date').comment('education completed date')
+            table.integer('state_id').comment('education completed state')
+            table.integer('country_id').comment('education completed country')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_passport_details', (table) => { // Employee Passport details table
+            table.increments().comment('Passport document details id')
+            table.uuid('employee_id').index().notNullable().comment('Employee_id')
+            table.date('valid_from').comment(' If document has validity date capture the validity from')
+            table.date('valid_till').comment('If document has valid end date, capture the validity end date')
+            table.string('document_number', 20).index().comment('Document number')
+            table.tinyint('status').unsigned().notNullable().comment('1 - Active, 0 - Expired')
+            table.integer('employee_dependent_id').index().comment('employee_dependent_id, if the passport is employee dependent')
+            table.integer('issued_country_id').index().comment('issued_country')
+            table.string('description', 255).comment('description of the document')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_personal_documents', (table) => { // Employee personal documents table
+            table.increments().comment('Personal document details id');
+            table.uuid('employee_id').index().notNullable().comment('Employee_id');
+            table.integer('document_type_id').comment('Document type id');
+            table.date('valid_from').comment(' If document has validity date capture the validity from');
+            table.date('valid_till').comment('If document has valid end date, capture the validity end date');
+            table.string('document_number', 30).comment('Document number');
+            table.tinyint('status').comment('1 - Active, 0 - Expired');
+            table.string('description', 255).comment('description of the document');
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_i94_details', (table) => { // Employee I94 documents table
+            table.increments().comment('I94 document details id')
+            table.uuid('employee_id').index().notNullable().comment('Employee_id')
+            table.date('valid_from').comment(' If document has validity date capture the validity from')
+            table.date('valid_till').comment('If document has valid end date, capture the validity end date')
+            table.string('document_number', 20).comment('Document number')
+            table.tinyint('status').comment('1 - Active, 0 - Expired').unsigned().notNullable()
+            table.integer('country_id').index().comment('country ID')
+            table.integer('employee_dependent_id').index().comment('employee_dependent_id, if the i94 is employee dependent')
+            table.string('description', 255).comment('description of the document')
+            table.tinyint('expiry_type').comment('D/S or Duration of Status and 2 for has expirty date')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_mapped_documents', (table) => { // Employee mapped documents details
+            table.increments().comment('Document ID')
+            table.tinyint('referrable_type').index().notNullable().comment('1 for Skills, 2 for Education, 3 for Passport, 4 for I94, 5 for Personal Documents, 6 for Vacations')
+            table.integer('referrable_type_id').comment('Referrable module ID')
+            table.string('document_name', 255).comment('name of the uploaded document')
+            table.tinyint('document_status').defaultTo(0).unsigned().notNullable().comment('0 - New, 1 - Rejected and 2 -Accepted')
+            table.string('document_url').comment('Document URL path')
+            table.string('document_path').comment('Path of the uploaded document')
+            table.string('description', 255).comment('description of the document')
+            table.tinyint('aws_s3_status').defaultTo(0).comment('0 for New, 1 for Pushed to AWS, 2 for Error')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_visa_details', (table) => {  // Employee Visa documents table
+            table.increments().comment('visa details id')
+            table.uuid('employee_id').index().notNullable().comment('Employee_id')
+            table.integer('visa_type_id').index().comment('visa type id of an employee')
+            table.date('valid_from').comment(' If document has validity date capture the validity from')
+            table.date('valid_till').comment('If document has valid end date, capture the validity end date')
+            table.string('document_number', 20).comment('Document number')
+            table.tinyint('status').index().unsigned().comment('Status of the Visa. 1 - Active, 0 - Expired')
+            table.string('visa_document_name', 255).comment('name of the uploaded document')
+            table.tinyint('visa_document_status').unsigned().comment('0 - New, 1 - Rejected and 2 -Accepted')
+            table.string('visa_document_url').comment('Document URL path')
+            table.string('visa_document_path').comment('Path of the uploaded document')
+            table.tinyint('visa_aws_s3_status').defaultTo(0).comment('0 for New, 1 for Pushed to AWS, 2 for Error')
+            table.string('i9_document_name', 255).comment('name of the uploaded document')
+            table.tinyint('i9_document_status').unsigned().comment('0 - New, 1 - Rejected and 2 -Accepted')
+            table.string('i9_document_url').comment('Document URL path')
+            table.string('i9_document_path').comment('Path of the uploaded document')
+            table.tinyint('i9_aws_s3_status').defaultTo(0).comment('0 for New, 1 for Pushed to AWS, 2 for Error')
+            table.string('description', 255).comment('description of the document')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_visa_detail_documents', (table) => { // Employee mapped visa documents details
+            table.increments().comment('Document ID')
+            table.integer('employee_visa_details_id').index().notNullable().comment('Referrable module ID')
+            table.integer('visa_document_type_id').comment('Visa Documents Type ID')
+            table.string('document_name', 255).comment('name of the uploaded document')
+            table.tinyint('document_status').defaultTo(0).unsigned().notNullable().comment('0 - New, 1 - Rejected and 2 -Accepted')
+            table.string('document_url').comment('Document URL path')
+            table.string('document_path').comment('Path of the uploaded document')
+            table.string('description', 255).comment('description of the document')
+            table.tinyint('aws_s3_status').defaultTo(0).comment('0 for New, 1 for Pushed to AWS, 2 for Error')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_address_details', (table) => { // Employee address details table
+            table.increments().comment('Address ID')
+            table.uuid('employee_id').index().notNullable().comment('Employee ID')
+            table.string('address_one', 255).comment('Address one details of an employee')
+            table.string('address_two', 255).comment('Address two of an employee')
+            table.string('city', 100).comment('city name')
+            table.integer('state_id').index().comment('State ID')
+            table.integer('country_id').index().comment('Country ID')
+            table.string('zip_code', 10)
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('employee_bank_account_details', (table) => { // Storing the employee bank details 
+            table.increments().comment('bank account details ID')
+            table.uuid('employee_id').index().notNullable().comment('Employee_id')
+            table.string('bank_name', 100).comment('Name of the account holder bank')
+            table.string('account_number', 25).index().notNullable().comment('Bank Account Number of the Employee');
+            table.string('routing_number', 25).comment('Bank routing number')
+            table.string('account_type', 25).comment('Type of the bank account')
+            table.tinyint('deposit_type').comment('This field is used to bifurcate the deposit type. 1 Full, 2 Partial, 3 Partial Percentage, 4 - Remainder Amount.')
+            table.specificType('deposit_value', 'double precision').defaultTo(0.00).comment('If the depost type is percentage then the value is consider as percentage, If the depost type is value then the value is consider as value.')
+            table.string('description', 255).comment('description of the document')
+            table.string('void_cheque_document_name', 255).comment('name of the uploaded document')
+            table.tinyint('void_cheque_document_status').defaultTo(0).unsigned().notNullable().comment('0 - New, 1 - Rejected and 2 -Accepted')
+            table.string('void_cheque_document_url').comment('Document URL path')
+            table.string('void_cheque_document_path').comment('Path of the uploaded document')
+            table.tinyint('void_cheque_aws_s3_status').defaultTo(0).comment('0 for New, 1 for Pushed to AWS, 2 for Error')
+            table.string('deposit_form_document_name', 255).comment('name of the uploaded document')
+            table.tinyint('deposit_form_document_status').defaultTo(0).unsigned().notNullable().comment('0 - New, 1 - Rejected and 2 -Accepted')
+            table.string('deposit_form_document_url').comment('Document URL path')
+            table.string('deposit_form_document_path').comment('Path of the uploaded document')
+            table.tinyint('deposit_form_aws_s3_status').defaultTo(0).comment('0 for New, 1 for Pushed to AWS, 2 for Error')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+
+        /**
+         * Payrate configurations
+         */
+        .createTable('pay_type_configuration', (table) => {  // Employee Pay type details details.
+            table.increments()
+            table.uuid('employee_id').index().notNullable().comment('Employee ID')
+            table.tinyint('pay_type').unsigned().notNullable().comment('pay type for this placement. Pay type will salary or hourly. 1 - Salary and 2 - Hourly')
+            table.specificType('pay_value', 'double precision').defaultTo(0.00).comment('total pay annualy or hourly')
+            table.specificType('payroll_pay', 'double precision').defaultTo(0.00).comment('Pay amount for each payroll. If set salary')
+            table.boolean('is_global').index().defaultTo(false).comment('true: Global Setting, false: Custom setting')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        .createTable('pay_rate_configuration', (table) => { //This tables comes when the Employee pay_type is hourly
+            table.increments()
+            table.integer('pay_type_configuration_id').index().notNullable().comment('Pay type configuration for this employee')
+            table.tinyint('pay_in').comment('pay in percentage or value 1- percentage, 2- value').unsigned().notNullable()
+            table.integer('from_hour').comment('pay rate effective from hour')
+            table.integer('to_hour').comment('pay rate effective from to hour')
+            table.specificType('rate', 'double precision').defaultTo(0.00).comment('payment amount for this particular hours duration')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+
+        /**
+         * Employee Dependent details
+         */
+        .createTable('employee_dependent_details', (table) => { // Employee dependent details table
+            table.increments();
+            table.uuid('employee_id').index().notNullable().comment('Employee ID')
+            table.integer('relationship_id').index().notNullable().comment('relation ship with employee')
+            table.string('first_name').notNullable().comment('enter first name')
+            table.string('middle_name').comment('enter middle name')
+            table.string('last_name').comment('enter last name')
+            table.string('contact_number', 12)
+            table.string('email_id', 320)
+            table.date('dob').comment('date of birth')
+            table.integer('visa_type_id').index().comment('enter visa type id')
+            table.string('ssn', 12).comment('SSN number')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+
+        /**
+         * Employee login activity tracks
+         */
+        .createTable('employee_login_activities', (table) => { // Employee login activity tracks
+            table.increments().comment('login activities ID');
+            table.uuid('employee_id').index().notNullable().comment('employee Id that logged In ');
+            table.string('ip', 50).comment('IP address of the employee')
+            table.timestamp('login_time').comment('login time of the employee');
+            table.string('region', 50).comment('region of the login')
+            table.specificType('geom', 'geography(Point, 4326)').comment('Geography location of IP address');
+            table.string('city').comment('City of IP address')
+            table.string('country').comment('Country of IP address')
+        })
+
+        .createTable('emp_balance_amount_audit_track', (table) => { // Table to track the employee balance amount update exclude payroll balance
+            table.increments().comment('Employee balance amount audit track ID');
+            table.uuid('employee_id').index().notNullable().comment('Employee ID');
+            table.text('remarks').comment('Remarks');
+            table.text('information').comment('Balance amount audit track');
+            table.uuid('created_by').comment('Record created employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+        })
+
+        /**
+         * To track the employee changes
+         */
+        .createTable('employee_profile_activity_track', (table) => {
+            table.increments('id').primary().comment('Employee Profile Activity Track ID');
+            table.uuid('employee_id').notNullable().index().comment('Employee ID');
+            table.tinyint('referrable_type').comment('1 for basic details, 2 for contact details, 3 for emergency contact details, 4 for current address, 5 for employment details, 6 for passport, 7 for i-94 , 8 for visa , 9 for education , 10 for personal docs, 11 for bank docs, 12 for dependent , 13 for vacation, 14 for skills, 15 for pay configuration, 16 for employee off boarding, 17 for rehire');
+            table.integer('referrable_type_id').comment('Referrable Type ID');
+            table.tinyint('action_type').comment('Action Type (1 - Create, 2 - Update, 3 - Delete)');
+            table.uuid('created_by').comment('Created By Employee ID');
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created Timestamp');
+        })
+        .createTable('employee_fields_changes', (table) => {
+            table.increments('id').primary().comment('Employee Fields Changes ID');
+            table.integer('employee_profile_activity_track_id').comment('Employee Profile Activity Track ID');
+            table.boolean('is_document_modified').comment('Is Document Modified');
+            table.string('field_name', 50).comment('Field Name');
+            table.string('old_value', 255).comment('Old Value');
+            table.string('new_value', 255).comment('New Value');
+        })
+
+        .createTable('employee_off_boarding', (table) => { // Employee off boarding table schema
+            table.uuid('id').defaultTo(tenant.raw('gen_random_uuid()')).primary().comment('employee id')
+            table.uuid('employee_id').comment('Id of the employee')
+            table.boolean('disable_user_access_across_apps').comment('Disable User access across apss')
+            table.boolean('skip_disable_user_access_across_apps').defaultTo(false).comment('skip Disable User access across apss')
+            table.jsonb('notify_emails').comment('to have the notification email, date and document')
+            table.boolean('skip_notify_emails').comment('to skip the notification')
+            table.date('delete_email_id_on').comment('delete mail id on date')
+            table.text('delete_email_id_document').comment('delete email id proof of document')
+            table.boolean('skip_delete_email_id').defaultTo(false).comment('skip delete email of the employee')
+            table.string('settlement_mode', 50).comment('settlement mode of the employee')
+            table.boolean('skip_settlement_mode').defaultTo(false).comment('skip settlement mode of the employee')
+            table.boolean('apps_revokes').comment('to check if we revoked the access')
+            table.boolean('skip_apps_revokes').comment('to skip the access revoke')
+            table.jsonb('revoke_email').comment('to revoke the email')
+            table.boolean('skip_revoke_email').comment('to skip the revoke of the email')
+            table.jsonb('placements').comment('Stores the placement ids and its end date')
+            table.tinyint('reimbursement_payment').comment('1 -> Add to Balancesheet, 2 -> Write off')
+            table.tinyint('deduction_payment').comment('1 -> Deduction from Balancesheet, 2 -> Write off')
+            table.jsonb('expense_ids').comment('Stores the expense Ids for which we are updating the status')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        /**
+         * Create Table to store basic information for invited employee through link
+         */
+        .createTable('invited_employee', (table) => {
+            table.increments('id')
+            table.string('first_name', 100).index().notNullable().comment('First Name on Invited Employee')
+            table.string('last_name', 100).index().notNullable().comment('Last Name of Invited Employee')
+            table.string('middle_name', 50).comment('Middle name of the Invited employee')
+            table.string('email_id', 320).index().notNullable().comment('Email Id of an Invited Employee')
+            table.string('mobile_number', 20).comment('Contact number of Invited Employee')
+            table.integer('employment_type_id').index().comment('Employment type of employee.')
+            table.integer('employee_category_id').index().comment('Employee comes under which category.')
+            table.string('status').defaultTo('invitation_sent').comment('invitation_sent, submitted, approved, rejected, onboarded')
+            table.datetime('link_expires_on').comment('link expiry date')
+            table.datetime('re_requested_on').comment('Re Requested On Date Used to delete the invited employee data after 7 days')
+            table.text('offer_letter_url').comment('offer letter uploaded document link')
+            table.uuid('i9_document_id').comment('i9 uploaded document id')
+            table.string('i9_status').comment('Approval Status of i9 Document')
+            table.uuid('w4_document_id').comment('w4 uploaded document id')
+            table.string('w4_status').comment('Approval Status of w4 Document')
+            table.json('upload_documents').comment('list of documents required for the invited employee to upload')
+            table.date('dob').comment('Date of birth of employee')
+            table.string('gender', 20).comment('Male or Female')
+            table.uuid('created_by').comment('Record created employee id')
+            table.timestamp('submitted_on').comment('Record Submitted On timestamp')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        /**
+         * Create Table to store overall employee information with specific keys
+         */
+        .createTable('invited_employee_information', (table) => {
+            table.increments('id')
+            table.integer('invited_employee_id').notNullable().comment('Invited employee Id')
+            table.json('invited_employee_data').notNullable().comment('Invited employee complete data')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        /**
+         * Create Table to store emergency contact information of the invited employee through link
+         */
+        .createTable('invited_employee_emergency_contact', (table) => {
+            table.increments('id')
+            table.integer('invited_employee_id').notNullable().comment('Invited employee Id')
+            table.string('name', 150).notNullable().comment('Name of the contact')
+            table.integer('relationship_id').index().comment('Relationship ID of the contact')
+            table.string('mobile_number', 20).comment('Mobile number of the contact')
+            table.string('address_1', 255).comment('Address_1 of the contact')
+            table.string('address_2', 255).comment('Address_2 of the contact')
+            table.string('city', 150).comment('City of the contact')
+            table.integer('state_id').index().comment('State ID of the contact')
+            table.integer('country_id').index().comment('Country ID of the contact')
+            table.string('zip_code', 10).comment('Zipcode of the contact')
+            table.uuid('created_by').comment('Record created employee id')
+            table.uuid('updated_by').comment('Record updated employee id')
+            table.timestamp('created_at').defaultTo(tenant.fn.now()).comment('Record Created timestamp')
+            table.timestamp('updated_at').defaultTo(tenant.fn.now()).comment('Record updated timestamp')
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+        /**
+         * Create Table to store invited employee documents with specific keys
+         */
+        .createTable('invited_employee_documents', (table) => {
+            table.uuid('id').defaultTo(tenant.raw('gen_random_uuid()')).primary()
+            table.string('document_name', 255).comment('Name of the document')
+            table.string('document_slug', 255).comment('Slug of the document')
+            table.string('document_url').comment('URL to access the document')
+            table.string('document_path').comment('Path of the document stored')
+            table.tinyint('document_status').defaultTo(0).unsigned().notNullable().comment('0 - New, 1 - Rejected and 2 -Accepted')
+            table.timestamp('created_at').defaultTo(tenant.fn.now())
+            table.timestamp('deleted_at').index().defaultTo(null).comment('Record deleted timestamp')
+        })
+};
+
+module.exports = employeeTableSchema;
